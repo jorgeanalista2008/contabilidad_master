@@ -6,6 +6,8 @@ import { AuthModule } from './auth/auth.module';
 import { MenuModule } from './menu/menu.module';
 import { TenantModule } from './tenant/tenant.module';
 import { CompanyModule } from './company/company.module';
+import { UserModule } from './user/user.module';
+import { RoleModule } from './role/role.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -16,6 +18,8 @@ import { APP_GUARD } from '@nestjs/core';
     MenuModule,
     TenantModule,
     CompanyModule,
+    UserModule,
+    RoleModule,
     ThrottlerModule.forRoot([{
       ttl: 60000, // 1 minute
       limit: 60,   // limit each IP to 60 requests per ttl
