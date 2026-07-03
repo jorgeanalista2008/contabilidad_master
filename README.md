@@ -94,6 +94,43 @@ Una vez que el servidor esté encendido, navega a:
 
 ---
 
+## 🔗 Módulos y Endpoints Disponibles
+
+La API expone los siguientes endpoints (todos bajo el prefijo global `/api`):
+
+### 🔑 Autenticación (`/auth`)
+* `POST /login`: Inicia sesión y obtiene el token de acceso JWT conteniendo los metadatos de Tenant y permisos planos.
+
+### 🗺️ Menú Dinámico (`/menu`)
+* `GET /`: Obtiene el árbol estructurado del menú filtrado dinámicamente según los permisos del JWT actual.
+
+### 👑 Gestión de Tenants (`/tenants`) - *Solo Super Admin*
+* `POST /`: Registra un nuevo Tenant e inicializa automáticamente sus roles base y su cuenta de usuario administrador.
+* `GET /`: Retorna el listado de todos los tenants con conteo de usuarios y empresas.
+* `GET /:id`: Retorna detalles específicos de facturación y entidades asociadas de un Tenant.
+* `PATCH /:id`: Modifica el plan, estado (`ACTIVE`, `SUSPENDED`) o la fecha de expiración.
+* `DELETE /:id`: Elimina de forma permanente el tenant y sus dependencias (cascada).
+
+### 🏢 Empresas Contables (`/companies`) - *Tenant Space*
+* `POST /`: Registra una empresa contable asignada a tu Tenant (Requiere permiso `company:write` y valida RIF venezolano).
+* `GET /`: Lista las empresas del Tenant actual (Requiere permiso `company:read`).
+* `GET /:id`: Detalles de una empresa (Requiere `company:read` y valida aislamiento de tenant).
+* `PATCH /:id`: Modifica datos o estado de la empresa (Requiere `company:write`).
+* `DELETE /:id`: Elimina la empresa (Requiere `company:write`).
+
+### 👥 Gestión de Usuarios (`/users`) - *Tenant Space*
+* `POST /`: Crea una cuenta de usuario (Contador, Auxiliar) asignándole un rol del tenant y validando contraseña robusta (Requiere `user:write`).
+* `GET /`: Lista todos los usuarios de tu equipo (Requiere `user:read`).
+* `GET /:id`: Obtiene el detalle de un usuario (Requiere `user:read`).
+* `PATCH /:id`: Modifica datos, contraseñas, estados o roles del usuario (Requiere `user:write`).
+* `DELETE /:id`: Elimina un usuario (Requiere `user:write`, protegido contra auto-eliminación).
+
+### 🛡️ Roles y Permisos (`/roles`) - *Tenant Space*
+* `GET /`: Lista los roles locales del tenant con sus permisos inyectados (Requiere `role:read`).
+* `GET /permissions`: Devuelve el catálogo global de permisos del sistema contable (Requiere `role:read`).
+
+---
+
 ## 💡 Guía de Integración con Next.js (Frontend)
 
 ### 1. Consumo del Menú en tu Sidebar
