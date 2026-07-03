@@ -44,6 +44,10 @@ export class CreateTenantDto {
   @ApiProperty({ example: 'ClinicaPass123!', description: 'Contraseña de la cuenta del administrador inicial' })
   @IsString()
   @IsNotEmpty({ message: 'La contraseña es requerida' })
-  @MinLength(6, { message: 'La contraseña del administrador debe tener al menos 6 caracteres' })
+  @MinLength(8, { message: 'La contraseña del administrador debe tener al menos 8 caracteres' })
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message:
+      'La contraseña del administrador debe contener al menos una letra mayúscula, una letra minúscula y un número o carácter especial',
+  })
   adminPassword: string;
 }

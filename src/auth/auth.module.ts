@@ -9,7 +9,12 @@ import { JwtStrategy } from './jwt.strategy';
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'super-secret-key-venezuela-saas-2026',
+      secret: (() => {
+        if (!process.env.JWT_SECRET) {
+          throw new Error('FATAL ERROR: La variable de entorno JWT_SECRET no está definida.');
+        }
+        return process.env.JWT_SECRET;
+      })(),
       signOptions: {
         expiresIn: (process.env.JWT_EXPIRATION || '24h') as any,
       },

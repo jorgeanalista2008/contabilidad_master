@@ -5,10 +5,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('FATAL ERROR: La variable de entorno JWT_SECRET no está definida.');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'super-secret-key-venezuela-saas-2026',
+      secretOrKey: process.env.JWT_SECRET,
     });
   }
 

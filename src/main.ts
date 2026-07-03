@@ -5,6 +5,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
+  // Validate critical environment variables
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ FATAL ERROR: La variable de entorno JWT_SECRET no está definida.');
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Global Route Prefix
@@ -19,9 +25,13 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS for frontend integration
+  // Enable CORS for frontend integration (whitelisted origins only)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:3000'];
+
   app.enableCors({
-    origin: '*',
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
