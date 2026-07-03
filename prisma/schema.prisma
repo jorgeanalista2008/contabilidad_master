@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id        String     @id @default(uuid())
+  name      String
+  rif       String     @unique // Venezuelan RIF (e.g. J-12345678-9)
+  plan      String     @default("BASIC") // e.g. BASIC, PREMIUM, ENTERPRISE
+  status    String     @default("ACTIVE") // ACTIVE, SUSPENDED, INACTIVE
+  expiresAt DateTime?  @map("expires_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  
+  users     User[]
+  companies Company[]
+  usageLogs UsageLog[]
+  roles     Role[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // Hashed password
+  name      String
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE
+  isSuperAdmin Boolean  @default(false) @map("is_super_admin")
+  tenantId     String   @map("tenant_id")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  roleId    String   @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  rif       String   @unique // Venezuelan RIF (e.g. J-12345678-9)
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String // e.g. Admin, Contador, Auxiliar
+  tenantId    String           @map("tenant_id")
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@unique([tenantId, name])
+  @@map("roles")
+}
+
+model Permission {
+  id          String               @id @default(uuid())
+  name        String               @unique // e.g. txt:generate, retention:create, invoice:read
+  description String?
+  roles       RolePermission[]
+  menuItems   MenuItemPermission[]
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String     @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Menu {
+  id          String     @id @default(uuid())
+  name        String     @unique // e.g. "Main Sidebar", "Admin Settings"
+  description String?
+  items       MenuItem[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id          String               @id @default(uuid())
+  title       String
+  path        String? // Next.js route path (e.g. "/retenciones/iva")
+  icon        String? // Icon string identifier (e.g. "file-text")
+  order       Int                  @default(0)
+  menuId      String               @map("menu_id")
+  menu        Menu                 @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parentId    String?              @map("parent_id")
+  parent      MenuItem?            @relation("MenuItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MenuItem[]           @relation("MenuItemHierarchy")
+  permissions MenuItemPermission[]
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+
+  @@map("menu_items")
+}
+
+model MenuItemPermission {
+  menuItemId   String     @map("menu_item_id")
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  permissionId String     @map("permission_id")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, permissionId])
+  @@map("menu_item_permissions")
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  action    String // e.g. EMISION_RETENCION, GENERACION_TXT
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("usage_logs")
+}
