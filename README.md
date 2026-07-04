@@ -129,6 +129,14 @@ La API expone los siguientes endpoints (todos bajo el prefijo global `/api`):
 * `GET /`: Lista los roles locales del tenant con sus permisos inyectados (Requiere `role:read`).
 * `GET /permissions`: Devuelve el catálogo global de permisos del sistema contable (Requiere `role:read`).
 
+### 📊 Plan de Cuentas Contables (`/companies/:companyId/accounts`) - *Tenant Space*
+* `POST /`: Registra una nueva cuenta contable para la empresa (Requiere `accounting:write` y valida formato numérico).
+* `POST /import-default`: Importa de manera automática la estructura estándar de cuentas de Venezuela (VEN-NIF) (Requiere `accounting:write`).
+* `GET /`: Lista las cuentas de la empresa (Requiere `accounting:read`, acepta query `?format=tree` o `list`).
+* `GET /:id`: Detalles de una cuenta contable específica (Requiere `accounting:read`).
+* `PATCH /:id`: Modifica el nombre o la configuración transaccional de la cuenta (Requiere `accounting:write`).
+* `DELETE /:id`: Elimina una cuenta contable (solo si no posee sub-cuentas) (Requiere `accounting:write`).
+
 ---
 
 ## 💡 Guía de Integración con Next.js (Frontend)
