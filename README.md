@@ -137,6 +137,16 @@ La API expone los siguientes endpoints (todos bajo el prefijo global `/api`):
 * `PATCH /:id`: Modifica el nombre o la configuración transaccional de la cuenta (Requiere `accounting:write`).
 * `DELETE /:id`: Elimina una cuenta contable (solo si no posee sub-cuentas) (Requiere `accounting:write`).
 
+### ✍️ Asientos Contables (`/companies/:companyId/journal-entries`) - *Tenant Space*
+* `POST /`: Registra un nuevo asiento contable general (Requiere `accounting:write`, valida partida doble e incrementa el número correlativo).
+* `GET /`: Lista todos los asientos de diario con sus líneas contables asociadas (Requiere `accounting:read`).
+* `GET /:id`: Obtiene el detalle completo de un asiento y sus movimientos al Debe/Haber (Requiere `accounting:read`).
+
+### 🇻🇪 Control Fiscal e Impuestos (`/companies/:companyId`) - *Tenant Space*
+* `POST /tax-documents`: Registra un documento fiscal de Compra o Venta. Calcula IVA (16%/8%), aplica retenciones IVA (75%/100%) y de ISLR (Decreto 1808), e inserta automáticamente el asiento por partida doble (Requiere `invoice:write`).
+* `GET /fiscal-books/compras`: Consulta el Libro de Compras oficial de la empresa para un mes/año (Requiere `invoice:read`).
+* `GET /fiscal-books/ventas`: Consulta el Libro de Ventas oficial de la empresa para un mes/año (Requiere `invoice:read`).
+
 ---
 
 ## 💡 Guía de Integración con Next.js (Frontend)
