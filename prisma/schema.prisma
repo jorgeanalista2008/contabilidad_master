@@ -42,15 +42,17 @@ model User {
 }
 
 model Company {
-  id        String              @id @default(uuid())
-  name      String
-  rif       String              @unique // Venezuelan RIF (e.g. J-12345678-9)
-  status    String              @default("ACTIVE") // ACTIVE, INACTIVE
-  tenantId  String              @map("tenant_id")
-  tenant    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  accounts  AccountingAccount[]
-  createdAt DateTime            @default(now()) @map("created_at")
-  updatedAt DateTime            @updatedAt @map("updated_at")
+  id             String              @id @default(uuid())
+  name           String
+  rif            String              @unique // Venezuelan RIF (e.g. J-12345678-9)
+  status         String              @default("ACTIVE") // ACTIVE, INACTIVE
+  tenantId       String              @map("tenant_id")
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  accounts       AccountingAccount[]
+  journalEntries JournalEntry[]
+  taxDocuments   TaxDocument[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
 
   @@map("companies")
 }
@@ -152,6 +154,7 @@ model AccountingAccount {
   parentId        String?             @map("parent_id")
   parent          AccountingAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children        AccountingAccount[] @relation("AccountHierarchy")
+  lines           JournalEntryLine[]
   companyId       String              @map("company_id")
   company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   tenantId        String              @map("tenant_id")
@@ -162,4 +165,75 @@ model AccountingAccount {
   @@index([companyId])
   @@index([tenantId])
   @@map("accounting_accounts")
+}
+
+model JournalEntry {
+  id           String             @id @default(uuid())
+  number       Int // Sequential entry number per company
+  date         DateTime
+  description  String // Concepto / Glosa
+  reference    String? // Document reference
+  status       String             @default("POSTED") // DRAFT, POSTED
+  companyId    String             @map("company_id")
+  company      Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tenantId     String             @map("tenant_id")
+  lines        JournalEntryLine[]
+  taxDocuments TaxDocument[]
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  @@unique([companyId, number])
+  @@index([companyId])
+  @@index([tenantId])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id          String            @id @default(uuid())
+  entryId     String            @map("entry_id")
+  entry       JournalEntry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountId   String            @map("account_id")
+  account     AccountingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  debit       Decimal           @default(0) @db.Decimal(18, 2)
+  credit      Decimal           @default(0) @db.Decimal(18, 2)
+  description String? // Line concept if different
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([entryId])
+  @@index([accountId])
+  @@map("journal_entry_lines")
+}
+
+model TaxDocument {
+  id                     String        @id @default(uuid())
+  type                   String // COMPRA, VENTA
+  documentType           String // FACTURA, NOTA_DEBITO, NOTA_CREDITO
+  invoiceNumber          String        @map("invoice_number")
+  controlNumber          String        @map("control_number") // Mandatory in Venezuela
+  rif                    String // Client/Provider RIF (e.g. J-12345678-9)
+  name                   String // Client/Provider name
+  date                   DateTime
+  subtotal               Decimal       @db.Decimal(18, 2) // Taxable base
+  ivaRate                Decimal       @default(16.00) @map("iva_rate") @db.Decimal(5, 2) // 16%, 8%, 0%
+  ivaAmount              Decimal       @map("iva_amount") @db.Decimal(18, 2) // Calculated VAT
+  total                  Decimal       @db.Decimal(18, 2) // Total invoice
+  ivaWithholdingRate     Decimal?      @map("iva_withholding_rate") @db.Decimal(5, 2) // e.g. 75% or 100%
+  ivaWithheld            Decimal?      @map("iva_withheld") @db.Decimal(18, 2) // VAT withheld
+  retentionVoucherNumber String?       @map("retention_voucher_number") // Voucher number
+  retentionDate          DateTime?     @map("retention_date")
+  islrWithholdingRate    Decimal?      @map("islr_withholding_rate") @db.Decimal(5, 2) // e.g. 1%, 2%
+  islrWithheld           Decimal?      @map("islr_withheld") @db.Decimal(18, 2) // ISLR withheld
+  companyId              String        @map("company_id")
+  company                Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tenantId               String        @map("tenant_id")
+  journalEntryId         String?       @map("journal_entry_id")
+  journalEntry           JournalEntry? @relation(fields: [journalEntryId], references: [id], onDelete: SetNull)
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@index([tenantId])
+  @@index([journalEntryId])
+  @@map("tax_documents")
 }
