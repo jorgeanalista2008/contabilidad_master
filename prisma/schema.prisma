@@ -42,14 +42,15 @@ model User {
 }
 
 model Company {
-  id        String   @id @default(uuid())
+  id        String              @id @default(uuid())
   name      String
-  rif       String   @unique // Venezuelan RIF (e.g. J-12345678-9)
-  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
-  tenantId  String   @map("tenant_id")
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  rif       String              @unique // Venezuelan RIF (e.g. J-12345678-9)
+  status    String              @default("ACTIVE") // ACTIVE, INACTIVE
+  tenantId  String              @map("tenant_id")
+  tenant    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  accounts  AccountingAccount[]
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
 
   @@map("companies")
 }
@@ -139,4 +140,26 @@ model UsageLog {
 
   @@index([tenantId])
   @@map("usage_logs")
+}
+
+model AccountingAccount {
+  id              String              @id @default(uuid())
+  code            String // e.g. "1.1.01.01.001"
+  name            String // e.g. "Caja Principal"
+  type            String // e.g. "ACTIVO", "PASIVO", "PATRIMONIO", "INGRESO", "COSTO", "GASTO", "CUENTAS_DE_ORDEN"
+  level           Int // e.g. 1, 2, 3, 4, 5
+  isTransactional Boolean             @default(true) @map("is_transactional") // If true, can have journal entries
+  parentId        String?             @map("parent_id")
+  parent          AccountingAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        AccountingAccount[] @relation("AccountHierarchy")
+  companyId       String              @map("company_id")
+  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tenantId        String              @map("tenant_id")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([tenantId])
+  @@map("accounting_accounts")
 }

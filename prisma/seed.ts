@@ -44,6 +44,8 @@ async function main() {
     { name: 'retention:create', description: 'Crear retenciones de IVA e ISLR' },
     { name: 'retention:delete', description: 'Eliminar o anular retenciones' },
     { name: 'txt:generate', description: 'Generar archivos TXT del SENIAT para declaraciones' },
+    { name: 'accounting:read', description: 'Ver plan de cuentas y asientos contables' },
+    { name: 'accounting:write', description: 'Crear o editar cuentas y registrar asientos' },
   ];
 
   const permissions: Record<string, any> = {};
@@ -268,6 +270,8 @@ async function main() {
           { permissionId: permissions['retention:read'].id },
           { permissionId: permissions['retention:create'].id },
           { permissionId: permissions['txt:generate'].id },
+          { permissionId: permissions['accounting:read'].id },
+          { permissionId: permissions['accounting:write'].id },
         ],
       },
     },
@@ -282,6 +286,7 @@ async function main() {
           { permissionId: permissions['company:read'].id },
           { permissionId: permissions['invoice:read'].id },
           { permissionId: permissions['retention:read'].id },
+          { permissionId: permissions['accounting:read'].id },
         ],
       },
     },
